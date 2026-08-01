@@ -12,7 +12,7 @@ from typing import Any
 from .archive import extract_archive
 from .canonical import sha256_file
 from .package import build_package
-from .toolchains import _run_windows_command, linux_compilers, validate_windows_output, windows_command_prefix
+from .toolchains import _run_windows_command, linux_compilers, validate_windows_output, windows_environment_prefix
 
 
 def _download(url: str, output: Path, expected_sha256: str) -> None:
@@ -101,10 +101,7 @@ def _windows_build(source_root: Path, contract: dict[str, Any], matrix_id: str, 
     scons = [sys.executable, "-m", "SCons", *_scons_arguments(contract, matrix_id, api)]
     quoted = subprocess.list2cmdline(scons)
     command = (
-        windows_command_prefix(contract, matrix_id)
-        + " && echo VCToolsVersion=%VCToolsVersion%"
-        + " && echo WindowsSdkVersion=%WindowsSdkVersion%"
-        + " && for %I in (cl.exe) do @echo CLPath=%~$PATH:I"
+        windows_environment_prefix(contract, matrix_id)
         + " && (cl 2>&1 || ver >nul) && "
         + quoted
     )

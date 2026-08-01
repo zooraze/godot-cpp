@@ -21,7 +21,9 @@ from release_lib.contracts import load_contract
 from release_lib.package import attach_attestations, build_package
 from release_lib.release import _parse_checksums, prepare_release, verify_release_dir, verify_revocations
 from release_lib.verify import verify_package
-from release_lib.toolchains import _run_windows_command, _windows_installer_arguments, validate_windows_output
+from release_lib.toolchains import (
+    _run_windows_command, _windows_installer_arguments, validate_windows_output, windows_environment_prefix,
+)
 from release_lib.workflow_policy import check_workflows
 
 SOURCE_COMMIT = "1" * 40
@@ -119,7 +121,7 @@ class ReleaseToolingTests(unittest.TestCase):
             "Microsoft (R) C/C++ Optimizing Compiler Version 19.50.35737 for x64\n"
         )
         completed = mock.Mock(returncode=0, stdout=output)
-        with mock.patch("release_lib.build.windows_command_prefix", return_value="call vcvars"), mock.patch(
+        with mock.patch("release_lib.build.windows_environment_prefix", return_value="call vcvars"), mock.patch(
             "release_lib.build.subprocess.run", return_value=completed
         ) as run:
             _windows_build(self.source, self.contract, "windows-x86_64", self.api)
@@ -139,6 +141,13 @@ class ReleaseToolingTests(unittest.TestCase):
             _run_windows_command('call "C:\\Program Files\\probe.bat"')
         self.assertEqual(run.call_args.args[0], 'call "C:\\Program Files\\probe.bat"')
         self.assertTrue(run.call_args.kwargs["shell"])
+
+    def test_windows_environment_is_read_after_vcvars(self) -> None:
+        with mock.patch("release_lib.toolchains.windows_command_prefix", return_value="call vcvars"):
+            command = windows_environment_prefix(self.contract, "windows-x86_64")
+        self.assertIn("&& set VCToolsVersion", command)
+        self.assertIn("&& set WindowsSdkVersion", command)
+        self.assertNotIn("%VCToolsVersion%", command)
 
     def test_workflow_policy(self) -> None:
         check_workflows(ROOT)

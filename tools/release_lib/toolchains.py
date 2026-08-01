@@ -159,6 +159,15 @@ def windows_command_prefix(contract: dict[str, Any], matrix_id: str) -> str:
     )
 
 
+def windows_environment_prefix(contract: dict[str, Any], matrix_id: str) -> str:
+    return (
+        windows_command_prefix(contract, matrix_id)
+        + " && set VCToolsVersion"
+        + " && set WindowsSdkVersion"
+        + " && for %I in (cl.exe) do @echo CLPath=%~$PATH:I"
+    )
+
+
 def validate_windows_output(
     output: str, contract: dict[str, Any], matrix_id: str
 ) -> dict[str, str]:
@@ -187,10 +196,7 @@ def validate_windows_output(
 
 def windows_probe(contract: dict[str, Any], matrix_id: str) -> dict[str, str]:
     command = (
-        windows_command_prefix(contract, matrix_id)
-        + " && echo VCToolsVersion=%VCToolsVersion%"
-        + " && echo WindowsSdkVersion=%WindowsSdkVersion%"
-        + " && for %I in (cl.exe) do @echo CLPath=%~$PATH:I"
+        windows_environment_prefix(contract, matrix_id)
         + " && (cl 2>&1 || ver >nul)"
     )
     result = _run_windows_command(command)
