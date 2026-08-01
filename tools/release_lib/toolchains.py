@@ -187,6 +187,7 @@ def windows_probe(contract: dict[str, Any], matrix_id: str) -> dict[str, str]:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
+    print(result.stdout, end="")
     if result.returncode:
         raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout)
     return validate_windows_output(result.stdout, contract, matrix_id)
@@ -218,6 +219,7 @@ def _prepare_windows(root: Path, contract: dict[str, Any], matrix_id: str) -> No
         if not setup.is_file() or not config.is_file():
             raise ValueError("reviewed Visual Studio installer inputs are missing")
         result = subprocess.run(_windows_installer_arguments(setup, installation, config))
+        print(f"Visual Studio installer exit code: {result.returncode}")
         if result.returncode not in (0, 3010):
             raise subprocess.CalledProcessError(result.returncode, result.args)
     if not toolset.is_dir():
