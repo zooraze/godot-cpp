@@ -192,6 +192,19 @@ def windows_probe(contract: dict[str, Any], matrix_id: str) -> dict[str, str]:
     return validate_windows_output(result.stdout, contract, matrix_id)
 
 
+def _windows_installer_arguments(setup: Path, installation: Path, config: Path) -> list[str]:
+    return [
+        str(setup),
+        "modify",
+        "--installPath",
+        str(installation),
+        "--config",
+        str(config),
+        "--quiet",
+        "--norestart",
+    ]
+
+
 def _prepare_windows(root: Path, contract: dict[str, Any], matrix_id: str) -> None:
     if os.name != "nt":
         raise ValueError("Windows toolchain provisioning requested on a non-Windows host")
@@ -204,18 +217,7 @@ def _prepare_windows(root: Path, contract: dict[str, Any], matrix_id: str) -> No
         config = root / provision["configuration_file"]
         if not setup.is_file() or not config.is_file():
             raise ValueError("reviewed Visual Studio installer inputs are missing")
-        result = subprocess.run(
-            [
-                str(setup),
-                "modify",
-                "--installPath",
-                str(installation),
-                "--config",
-                str(config),
-                "--quiet",
-                "--norestart",
-            ]
-        )
+        result = subprocess.run(_windows_installer_arguments(setup, installation, config))
         if result.returncode not in (0, 3010):
             raise subprocess.CalledProcessError(result.returncode, result.args)
     if not toolset.is_dir():
