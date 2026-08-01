@@ -188,7 +188,7 @@
           ],
           "properties": {
             "version": {
-              "const": "3.12.11"
+              "const": "3.12.10"
             }
           }
         }

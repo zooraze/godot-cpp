@@ -34,7 +34,7 @@ def validate_contract(contract: dict[str, Any]) -> None:
         raise ValueError("invalid extension API digest")
     if not _SHA64.fullmatch(contract["profile"]["sha256"]):
         raise ValueError("invalid profile digest")
-    if contract["build"].get("python", {}).get("version") != "3.12.11":
+    if contract["build"].get("python", {}).get("version") != "3.12.10":
         raise ValueError("unexpected Python toolchain version")
     matrix = contract["expected_matrix"]
     if sorted(matrix) != sorted(contract["platforms"]):

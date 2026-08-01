@@ -65,7 +65,7 @@
       "wheel_sha256": "bd9d1c52f908d874eba92a8c0c0a8dcf2ed9f3b88ab956d0fce1da479c4e7126"
     },
     "python": {
-      "version": "3.12.11"
+      "version": "3.12.10"
     }
   },
   "platforms": {

@@ -41,7 +41,7 @@ def check_workflows(root: Path) -> None:
     _validate_action_pins(root, allowlist)
     for name, text in texts.items():
         setup_count = text.count("uses: actions/setup-python@")
-        if setup_count == 0 or setup_count != text.count("python-version: '3.12.11'"):
+        if setup_count == 0 or setup_count != text.count("python-version: '3.12.10'"):
             raise ValueError(f"every job must use the reviewed Python version in {name}")
         if text.count("check-latest: false") != setup_count:
             raise ValueError(f"setup-python must not resolve a moving version in {name}")

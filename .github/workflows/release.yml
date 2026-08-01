@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
-          python-version: '3.12.11'
+          python-version: '3.12.10'
           check-latest: false
       - run: python tools/release.py verify-source --contract release/contracts/godot-4.7.1-build.1.json --commit "${{ inputs.source_commit }}" --branch master
       - run: python tools/release.py check-workflows
@@ -55,7 +55,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
-          python-version: '3.12.11'
+          python-version: '3.12.10'
           check-latest: false
       - run: python tools/release.py prepare-toolchain --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}"
       - run: python tools/release.py verify-source --contract release/contracts/godot-4.7.1-build.1.json --commit "${{ inputs.source_commit }}" --branch master
@@ -107,7 +107,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
-          python-version: '3.12.11'
+          python-version: '3.12.10'
           check-latest: false
       - run: python tools/release.py verify-source --contract release/contracts/godot-4.7.1-build.1.json --commit "$SOURCE_COMMIT" --branch master
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
