@@ -16,6 +16,18 @@ def _first_line(command: list[str]) -> str:
     ).stdout.splitlines()[0]
 
 
+def _run_windows_command(command: str, *, cwd: Path | None = None, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        cwd=cwd,
+        env=env,
+        shell=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+
 def linux_compilers(contract: dict[str, Any], matrix_id: str) -> tuple[str, str, str]:
     expected = contract["platforms"][matrix_id]["compiler"]["version"]
     cc = shutil.which("clang-17")
@@ -181,12 +193,7 @@ def windows_probe(contract: dict[str, Any], matrix_id: str) -> dict[str, str]:
         + " && for %I in (cl.exe) do @echo CLPath=%~$PATH:I"
         + " && (cl 2>&1 || ver >nul)"
     )
-    result = subprocess.run(
-        ["cmd.exe", "/d", "/s", "/c", command],
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
+    result = _run_windows_command(command)
     print(result.stdout, end="")
     if result.returncode:
         raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout)

@@ -13,7 +13,7 @@ from typing import Any
 from .archive import extract_archive
 from .canonical import sha256_file
 from .release import verify_release_dir, verify_revocations
-from .toolchains import linux_compilers, validate_windows_output, windows_command_prefix
+from .toolchains import _run_windows_command, linux_compilers, validate_windows_output, windows_command_prefix
 
 
 def consumer_runtime_flags(platform: dict[str, Any]) -> list[str]:
@@ -80,7 +80,7 @@ def smoke_test(package: Path, matrix_id: str, smoke_source: Path, contract: dict
                 + " && (cl 2>&1 || ver >nul) && "
                 + body
             )
-            result = subprocess.run(["cmd.exe", "/d", "/s", "/c", shell], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            result = _run_windows_command(shell)
             if result.returncode:
                 raise subprocess.CalledProcessError(result.returncode, shell, output=result.stdout)
             validate_windows_output(result.stdout, contract, matrix_id)

@@ -12,7 +12,7 @@ from typing import Any
 from .archive import extract_archive
 from .canonical import sha256_file
 from .package import build_package
-from .toolchains import linux_compilers, validate_windows_output, windows_command_prefix
+from .toolchains import _run_windows_command, linux_compilers, validate_windows_output, windows_command_prefix
 
 
 def _download(url: str, output: Path, expected_sha256: str) -> None:
@@ -108,13 +108,10 @@ def _windows_build(source_root: Path, contract: dict[str, Any], matrix_id: str, 
         + " && (cl 2>&1 || ver >nul) && "
         + quoted
     )
-    result = subprocess.run(
-        ["cmd.exe", "/d", "/s", "/c", command],
+    result = _run_windows_command(
+        command,
         cwd=source_root,
         env=dict(os.environ, SOURCE_DATE_EPOCH=str(contract["build"]["source_date_epoch"])),
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
     )
     if result.returncode:
         raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout)

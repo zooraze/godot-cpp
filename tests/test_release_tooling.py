@@ -21,7 +21,7 @@ from release_lib.contracts import load_contract
 from release_lib.package import attach_attestations, build_package
 from release_lib.release import _parse_checksums, prepare_release, verify_release_dir, verify_revocations
 from release_lib.verify import verify_package
-from release_lib.toolchains import _windows_installer_arguments, validate_windows_output
+from release_lib.toolchains import _run_windows_command, _windows_installer_arguments, validate_windows_output
 from release_lib.workflow_policy import check_workflows
 
 SOURCE_COMMIT = "1" * 40
@@ -132,6 +132,13 @@ class ReleaseToolingTests(unittest.TestCase):
         self.assertEqual(command[1], "modify")
         self.assertIn("--config", command)
         self.assertNotIn("--wait", command)
+
+    def test_windows_batch_command_uses_shell_string(self) -> None:
+        completed = mock.Mock(returncode=0, stdout="")
+        with mock.patch("release_lib.toolchains.subprocess.run", return_value=completed) as run:
+            _run_windows_command('call "C:\\Program Files\\probe.bat"')
+        self.assertEqual(run.call_args.args[0], 'call "C:\\Program Files\\probe.bat"')
+        self.assertTrue(run.call_args.kwargs["shell"])
 
     def test_workflow_policy(self) -> None:
         check_workflows(ROOT)
