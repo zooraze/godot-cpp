@@ -1,0 +1,40 @@
+name: Independent release verification
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published immutable release tag
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  attestations: read
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-x86_64
+            runner: ubuntu-22.04
+          - id: windows-x86_64
+            runner: windows-2025-vs2026
+    runs-on: ${{ matrix.runner }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.11'
+          check-latest: false
+      - run: python tools/release.py check-workflows
+      - run: python tools/release.py prepare-toolchain --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}"
+      - run: python tools/release.py verify-release-url --contract release/contracts/godot-4.7.1-build.1.json --repository "${{ github.repository }}" --tag "${{ env.RELEASE_TAG }}" --matrix "${{ matrix.id }}" --output build/consumer --smoke-source tools/smoke/extension.cpp
+      - run: python tools/release.py verify-github-release --repository "${{ github.repository }}" --tag "${{ env.RELEASE_TAG }}" --directory build/consumer

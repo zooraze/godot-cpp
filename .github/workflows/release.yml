@@ -1,0 +1,155 @@
+name: Production binary release
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Exact protected master commit to build
+        required: true
+        type: string
+      tag:
+        description: Immutable release tag
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.11'
+          check-latest: false
+      - run: python tools/release.py verify-source --contract release/contracts/godot-4.7.1-build.1.json --commit "${{ inputs.source_commit }}" --branch master
+      - run: python tools/release.py check-workflows
+      - run: python -m unittest discover -s tests -v
+
+  build:
+    needs: validate
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-x86_64
+            runner: ubuntu-22.04
+          - id: windows-x86_64
+            runner: windows-2025-vs2026
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.11'
+          check-latest: false
+      - run: python tools/release.py prepare-toolchain --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}"
+      - run: python tools/release.py verify-source --contract release/contracts/godot-4.7.1-build.1.json --commit "${{ inputs.source_commit }}" --branch master
+      - run: python tools/release.py check-workflows
+      - run: python -m pip install --require-hashes -r release/requirements.txt
+      - id: names
+        run: python tools/release.py names --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}" --github-output
+      - run: python tools/release.py build --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}" --output build/candidate --source-commit "${{ inputs.source_commit }}"
+      - run: python tools/release.py verify-package --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}" --package "build/candidate/${{ steps.names.outputs.package }}" --source-commit "${{ inputs.source_commit }}"
+      - name: Attest build provenance
+        id: provenance
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d
+        with:
+          subject-path: build/candidate/${{ steps.names.outputs.package }}
+          create-storage-record: false
+      - name: Attest package SBOM
+        id: sbom
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d
+        with:
+          subject-path: build/candidate/${{ steps.names.outputs.package }}
+          sbom-path: build/candidate/${{ steps.names.outputs.sbom }}
+          create-storage-record: false
+      - run: python tools/release.py attach-attestations --descriptor "build/candidate/${{ steps.names.outputs.descriptor }}" --provenance "${{ steps.provenance.outputs.bundle-path }}" --sbom "${{ steps.sbom.outputs.bundle-path }}"
+      - run: python tools/release.py verify-candidate --contract release/contracts/godot-4.7.1-build.1.json --descriptor "build/candidate/${{ steps.names.outputs.descriptor }}" --require-attestations
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: candidate-${{ matrix.id }}
+          path: build/candidate
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+  promote:
+    needs: build
+    runs-on: ubuntu-22.04
+    environment: release
+    permissions:
+      actions: write
+      attestations: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.11'
+          check-latest: false
+      - run: python tools/release.py verify-source --contract release/contracts/godot-4.7.1-build.1.json --commit "$SOURCE_COMMIT" --branch master
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: candidate-*
+          path: build/candidates
+          merge-multiple: true
+      - run: python tools/release.py prepare-release --contract release/contracts/godot-4.7.1-build.1.json --candidates build/candidates --output build/release --tag "$TAG" --source-commit "$SOURCE_COMMIT"
+      - name: Verify candidate attestations
+        run: |
+          set -euo pipefail
+          for package in build/release/*.zip build/release/*.tar.zst; do
+            [ -e "$package" ] || continue
+            gh attestation verify "$package" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-digest "$SOURCE_COMMIT" --deny-self-hosted-runners
+          done
+      - name: Create complete draft release
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release already exists: $TAG" >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag already exists: $TAG" >&2
+            exit 1
+          fi
+          printf 'Verified binary packages for Godot %s.\n' "4.7.1" > build/release-notes.md
+          gh release create "$TAG" build/release/* --repo "$GITHUB_REPOSITORY" --target "$SOURCE_COMMIT" --draft --title "$TAG" --notes-file build/release-notes.md
+      - name: Round-trip the draft
+        run: |
+          set -euo pipefail
+          mkdir -p build/roundtrip
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir build/roundtrip
+          python tools/release.py verify-release-dir --contract release/contracts/godot-4.7.1-build.1.json --directory build/roundtrip
+      - name: Publish immutable release
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+          test "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = "false"
+          test "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isImmutable --jq .isImmutable)" = "true"
+          gh release verify "$TAG" --repo "$GITHUB_REPOSITORY"
+      - name: Dispatch independent verification
+        run: gh workflow run verify-release.yml --repo "$GITHUB_REPOSITORY" --ref "$SOURCE_COMMIT" -f tag="$TAG"

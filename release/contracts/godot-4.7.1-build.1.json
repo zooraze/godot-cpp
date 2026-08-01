@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "repository": {
+    "full_name": "zooraze/godot-cpp",
+    "default_branch": "master",
+    "ownership": "personal-account"
+  },
+  "release": {
+    "package_revision": 1,
+    "proposed_tag": "godot-4.7.1-build.1",
+    "immutable_releases_required": true,
+    "environment": "release"
+  },
+  "source": {
+    "upstream_repository": "https://github.com/godotengine/godot-cpp",
+    "upstream_commit": "ba0edfed90512ec64aba51d4295a3e7e30112f86",
+    "public_patches": [
+      {
+        "kind": "binary-release-product",
+        "status": "fork-only",
+        "summary": "Deterministic package contracts, tooling, workflows, and release verification"
+      }
+    ]
+  },
+  "godot": {
+    "version": "4.7.1",
+    "build_identity": "4.7.1.stable.official.a13da4feb",
+    "extension_api_sha256": "c5dbd0c117e67f96bd9fef2c2e2023913e1d750d072ad2417a559e698211800b",
+    "archives": {
+      "linux-x86_64": {
+        "url": "https://github.com/godotengine/godot-builds/releases/download/4.7.1-stable/Godot_v4.7.1-stable_linux.x86_64.zip",
+        "sha256": "c7ff14fd28472c8d4f193043de30278dcf7e5241a1dcf7566b02e27addaa33ba",
+        "binary": "Godot_v4.7.1-stable_linux.x86_64"
+      },
+      "windows-x86_64": {
+        "url": "https://github.com/godotengine/godot-builds/releases/download/4.7.1-stable/Godot_v4.7.1-stable_win64.exe.zip",
+        "sha256": "c7a289051eaefb460b0106b60e9cd5bee0ef55fd102dcb2bed1eb356cf3d90a1",
+        "binary": "Godot_v4.7.1-stable_win64.exe"
+      }
+    }
+  },
+  "profile": {
+    "path": "release/profiles/godot-4.7.1-editor-minimal.json",
+    "sha256": "8a651d677ef7ed56514f57be1609d5cdd1800ef20f871d6d7be8b328dce51478"
+  },
+  "build": {
+    "target": "editor",
+    "configuration": "release",
+    "optimization": "speed",
+    "precision": "single",
+    "threads": true,
+    "exceptions": false,
+    "rtti": true,
+    "cxx_standard": "c++17",
+    "symbols_visibility_option": "hidden",
+    "lto": "none",
+    "debug_symbols": false,
+    "use_hot_reload": false,
+    "generate_bindings": true,
+    "build_library": true,
+    "library_type": "static",
+    "source_date_epoch": 0,
+    "scons": {
+      "version": "4.10.1",
+      "wheel_sha256": "bd9d1c52f908d874eba92a8c0c0a8dcf2ed9f3b88ab956d0fce1da479c4e7126"
+    },
+    "python": {
+      "version": "3.12.11"
+    }
+  },
+  "platforms": {
+    "linux-x86_64": {
+      "os": "linux",
+      "architecture": "x86_64",
+      "runner_label": "ubuntu-22.04",
+      "archive_format": "tar.zst",
+      "compiler": {
+        "family": "clang",
+        "version": "17.0.6"
+      },
+      "standard_library": {
+        "name": "libstdc++",
+        "cxx11_abi": true,
+        "consumer_runtime_linkage": "static-libstdc++-and-libgcc"
+      },
+      "minimum_runtime": {
+        "glibc": "2.35"
+      },
+      "effective_symbol_visibility": "hidden",
+      "provisioning": {
+        "provider": "apt.llvm.org",
+        "repository": "https://apt.llvm.org/jammy/",
+        "suite": "llvm-toolchain-jammy-17",
+        "signing_key_url": "https://apt.llvm.org/llvm-snapshot.gpg.key",
+        "signing_key_fingerprint": "6084F3CF814B57C1CF12EFD515CF4D18AF4F7421",
+        "keyring_path": "/usr/share/keyrings/apt.llvm.org.asc",
+        "sources_path": "/etc/apt/sources.list.d/apt.llvm.org.list",
+        "packages": [
+          "clang-17"
+        ],
+        "package_version_prefix": "1:17.0.6"
+      }
+    },
+    "windows-x86_64": {
+      "os": "windows",
+      "architecture": "x86_64",
+      "runner_label": "windows-2025-vs2026",
+      "archive_format": "zip",
+      "compiler": {
+        "family": "msvc",
+        "version": "19.50.35737",
+        "build_tools": "14.50",
+        "msbuild_platform_toolset": "v145"
+      },
+      "standard_library": {
+        "name": "msvc-stl",
+        "crt_linkage": "/MT"
+      },
+      "sdk": {
+        "windows": "10.0.26100.0"
+      },
+      "minimum_runtime": {
+        "windows": "10"
+      },
+      "effective_symbol_visibility": "msvc-export-model",
+      "provisioning": {
+        "provider": "visual-studio-installer",
+        "component_id": "Microsoft.VisualStudio.Component.VC.14.50.18.0.x86.x64",
+        "toolset_version": "14.50.35717",
+        "configuration_file": "release/toolchains/windows-msvc-14.50.vsconfig"
+      }
+    }
+  },
+  "expected_matrix": [
+    "linux-x86_64",
+    "windows-x86_64"
+  ],
+  "attestation": {
+    "action": "actions/attest",
+    "create_storage_record": false,
+    "required_permissions": [
+      "id-token:write",
+      "attestations:write"
+    ],
+    "forbidden_permissions": [
+      "artifact-metadata:write"
+    ]
+  }
+}

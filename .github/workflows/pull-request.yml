@@ -1,0 +1,44 @@
+name: Binary package pull request verification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.11'
+          check-latest: false
+      - run: python tools/release.py check-workflows
+      - run: python -m unittest discover -s tests -v
+
+  build:
+    needs: policy
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-x86_64
+            runner: ubuntu-22.04
+          - id: windows-x86_64
+            runner: windows-2025-vs2026
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12.11'
+          check-latest: false
+      - run: python tools/release.py prepare-toolchain --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}"
+      - run: python -m pip install --require-hashes -r release/requirements.txt
+      - id: names
+        run: python tools/release.py names --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}" --github-output
+      - run: python tools/release.py build --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}" --output build/candidate --source-commit "${{ github.sha }}"
+      - run: python tools/release.py verify-package --contract release/contracts/godot-4.7.1-build.1.json --matrix "${{ matrix.id }}" --package "build/candidate/${{ steps.names.outputs.package }}" --source-commit "${{ github.sha }}"
+      - run: python tools/release.py verify-candidate --contract release/contracts/godot-4.7.1-build.1.json --descriptor "build/candidate/${{ steps.names.outputs.descriptor }}"

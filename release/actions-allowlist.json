@@ -1,0 +1,7 @@
+{
+  "actions/attest": "508db95dd578ae2727ebd6217d5ba78e4fbda05d",
+  "actions/checkout": "11d5960a326750d5838078e36cf38b85af677262",
+  "actions/download-artifact": "d3f86a106a0bac45b974a628896c90dbdf5c8093",
+  "actions/setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
+  "actions/upload-artifact": "ea165f8d65b6e75b540449e92b4886f43607fa02"
+}

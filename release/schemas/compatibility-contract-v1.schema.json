@@ -1,0 +1,471 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/zooraze/godot-cpp/blob/master/release/schemas/compatibility-contract-v1.schema.json",
+  "title": "godot-cpp compatibility contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dependency",
+    "package_revision",
+    "source",
+    "godot",
+    "profile_sha256",
+    "build",
+    "matrix_id",
+    "platform"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "dependency": {
+      "const": "godot-cpp"
+    },
+    "package_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "upstream_repository",
+        "upstream_commit",
+        "public_patches"
+      ],
+      "properties": {
+        "upstream_repository": {
+          "type": "string",
+          "format": "uri"
+        },
+        "upstream_commit": {
+          "$ref": "#/$defs/gitSha"
+        },
+        "public_patches": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "godot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "build_identity",
+        "extension_api_sha256"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "build_identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "extension_api_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "profile_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "configuration",
+        "optimization",
+        "precision",
+        "threads",
+        "exceptions",
+        "rtti",
+        "cxx_standard",
+        "symbols_visibility_option",
+        "lto",
+        "debug_symbols",
+        "use_hot_reload",
+        "generate_bindings",
+        "build_library",
+        "library_type",
+        "source_date_epoch",
+        "python",
+        "scons"
+      ],
+      "properties": {
+        "target": {
+          "enum": [
+            "editor",
+            "template_debug",
+            "template_release"
+          ]
+        },
+        "configuration": {
+          "type": "string"
+        },
+        "optimization": {
+          "type": "string"
+        },
+        "precision": {
+          "enum": [
+            "single",
+            "double"
+          ]
+        },
+        "threads": {
+          "type": "boolean"
+        },
+        "exceptions": {
+          "type": "boolean"
+        },
+        "rtti": {
+          "type": "boolean"
+        },
+        "cxx_standard": {
+          "type": "string"
+        },
+        "symbols_visibility_option": {
+          "enum": [
+            "auto",
+            "visible",
+            "hidden"
+          ]
+        },
+        "lto": {
+          "enum": [
+            "none",
+            "auto",
+            "thin",
+            "full"
+          ]
+        },
+        "debug_symbols": {
+          "type": "boolean"
+        },
+        "use_hot_reload": {
+          "type": "boolean"
+        },
+        "generate_bindings": {
+          "type": "boolean"
+        },
+        "build_library": {
+          "type": "boolean"
+        },
+        "library_type": {
+          "const": "static"
+        },
+        "source_date_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scons": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version",
+            "wheel_sha256"
+          ],
+          "properties": {
+            "version": {
+              "type": "string"
+            },
+            "wheel_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        },
+        "python": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version"
+          ],
+          "properties": {
+            "version": {
+              "const": "3.12.11"
+            }
+          }
+        }
+      }
+    },
+    "matrix_id": {
+      "enum": [
+        "linux-x86_64",
+        "windows-x86_64"
+      ]
+    },
+    "platform": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/linux"
+        },
+        {
+          "$ref": "#/$defs/windows"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "linux": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "architecture",
+        "runner_label",
+        "archive_format",
+        "compiler",
+        "standard_library",
+        "minimum_runtime",
+        "effective_symbol_visibility",
+        "provisioning"
+      ],
+      "properties": {
+        "os": {
+          "const": "linux"
+        },
+        "architecture": {
+          "const": "x86_64"
+        },
+        "runner_label": {
+          "const": "ubuntu-22.04"
+        },
+        "archive_format": {
+          "const": "tar.zst"
+        },
+        "compiler": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "family",
+            "version"
+          ],
+          "properties": {
+            "family": {
+              "const": "clang"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        },
+        "standard_library": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "cxx11_abi",
+            "consumer_runtime_linkage"
+          ],
+          "properties": {
+            "name": {
+              "const": "libstdc++"
+            },
+            "cxx11_abi": {
+              "type": "boolean"
+            },
+            "consumer_runtime_linkage": {
+              "const": "static-libstdc++-and-libgcc"
+            }
+          }
+        },
+        "minimum_runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "glibc"
+          ],
+          "properties": {
+            "glibc": {
+              "type": "string"
+            }
+          }
+        },
+        "effective_symbol_visibility": {
+          "const": "hidden"
+        },
+        "provisioning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "repository",
+            "suite",
+            "signing_key_url",
+            "signing_key_fingerprint",
+            "keyring_path",
+            "sources_path",
+            "packages",
+            "package_version_prefix"
+          ],
+          "properties": {
+            "provider": {
+              "const": "apt.llvm.org"
+            },
+            "repository": {
+              "const": "https://apt.llvm.org/jammy/"
+            },
+            "suite": {
+              "const": "llvm-toolchain-jammy-17"
+            },
+            "signing_key_url": {
+              "const": "https://apt.llvm.org/llvm-snapshot.gpg.key"
+            },
+            "signing_key_fingerprint": {
+              "const": "6084F3CF814B57C1CF12EFD515CF4D18AF4F7421"
+            },
+            "keyring_path": {
+              "const": "/usr/share/keyrings/apt.llvm.org.asc"
+            },
+            "sources_path": {
+              "const": "/etc/apt/sources.list.d/apt.llvm.org.list"
+            },
+            "packages": {
+              "const": [
+                "clang-17"
+              ]
+            },
+            "package_version_prefix": {
+              "const": "1:17.0.6"
+            }
+          }
+        }
+      }
+    },
+    "windows": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "architecture",
+        "runner_label",
+        "archive_format",
+        "compiler",
+        "standard_library",
+        "sdk",
+        "minimum_runtime",
+        "effective_symbol_visibility",
+        "provisioning"
+      ],
+      "properties": {
+        "os": {
+          "const": "windows"
+        },
+        "architecture": {
+          "const": "x86_64"
+        },
+        "runner_label": {
+          "const": "windows-2025-vs2026"
+        },
+        "archive_format": {
+          "const": "zip"
+        },
+        "compiler": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "family",
+            "version",
+            "build_tools",
+            "msbuild_platform_toolset"
+          ],
+          "properties": {
+            "family": {
+              "const": "msvc"
+            },
+            "version": {
+              "const": "19.50.35737"
+            },
+            "build_tools": {
+              "const": "14.50"
+            },
+            "msbuild_platform_toolset": {
+              "const": "v145"
+            }
+          }
+        },
+        "standard_library": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "crt_linkage"
+          ],
+          "properties": {
+            "name": {
+              "const": "msvc-stl"
+            },
+            "crt_linkage": {
+              "const": "/MT"
+            }
+          }
+        },
+        "sdk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "windows"
+          ],
+          "properties": {
+            "windows": {
+              "const": "10.0.26100.0"
+            }
+          }
+        },
+        "minimum_runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "windows"
+          ],
+          "properties": {
+            "windows": {
+              "type": "string"
+            }
+          }
+        },
+        "effective_symbol_visibility": {
+          "const": "msvc-export-model"
+        },
+        "provisioning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "component_id",
+            "toolset_version",
+            "configuration_file"
+          ],
+          "properties": {
+            "provider": {
+              "const": "visual-studio-installer"
+            },
+            "component_id": {
+              "const": "Microsoft.VisualStudio.Component.VC.14.50.18.0.x86.x64"
+            },
+            "toolset_version": {
+              "const": "14.50.35717"
+            },
+            "configuration_file": {
+              "const": "release/toolchains/windows-msvc-14.50.vsconfig"
+            }
+          }
+        }
+      }
+    }
+  }
+}

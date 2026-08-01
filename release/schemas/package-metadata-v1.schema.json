@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/zooraze/godot-cpp/blob/master/release/schemas/package-metadata-v1.schema.json",
+  "title": "godot-cpp binary package metadata v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "package_id", "contract_sha256", "compatibility", "source", "build_provenance", "payload_manifest_sha256", "payload", "reproducibility"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "package_id": {"type": "string", "minLength": 1},
+    "contract_sha256": {"$ref": "#/$defs/sha256"},
+    "compatibility": {"$ref": "compatibility-contract-v1.schema.json"},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["upstream_repository", "upstream_commit", "fork_repository", "fork_commit", "public_patches"],
+      "properties": {
+        "upstream_repository": {"type": "string", "format": "uri"}, "upstream_commit": {"$ref": "#/$defs/gitSha"},
+        "fork_repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"}, "fork_commit": {"$ref": "#/$defs/gitSha"},
+        "public_patches": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "build_provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "workflow", "workflow_commit", "run_id", "runner", "toolchain", "godot_build_identity", "command", "environment"],
+      "properties": {
+        "schema_version": {"const": 1}, "workflow": {"type": "string"}, "workflow_commit": {"$ref": "#/$defs/gitSha"}, "run_id": {"type": "string"},
+        "runner": {"type": "object"}, "toolchain": {"type": "object"}, "godot_build_identity": {"type": "string"},
+        "command": {"type": "array", "items": {"type": "string"}}, "environment": {"type": "object"}
+      }
+    },
+    "payload_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "payload": {
+      "type": "object", "additionalProperties": false,
+      "required": ["extension_api_sha256", "profile_sha256", "sbom_sha256", "licenses", "library"],
+      "properties": {
+        "extension_api_sha256": {"$ref": "#/$defs/sha256"}, "profile_sha256": {"$ref": "#/$defs/sha256"}, "sbom_sha256": {"$ref": "#/$defs/sha256"},
+        "licenses": {"type": "object", "additionalProperties": false, "required": ["godot_cpp_sha256", "godot_sha256"], "properties": {"godot_cpp_sha256": {"$ref": "#/$defs/sha256"}, "godot_sha256": {"$ref": "#/$defs/sha256"}}},
+        "library": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string"}, "sha256": {"$ref": "#/$defs/sha256"}}}
+      }
+    },
+    "reproducibility": {"enum": ["untested", "structurally-reproducible", "byte-reproducible"]}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "gitSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"}}
+}
