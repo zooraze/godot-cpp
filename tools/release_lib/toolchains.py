@@ -213,7 +213,6 @@ def _prepare_windows(root: Path, contract: dict[str, Any], matrix_id: str) -> No
                 "--config",
                 str(config),
                 "--quiet",
-                "--wait",
                 "--norestart",
             ]
         )

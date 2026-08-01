@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import shutil
 import tempfile
 import unittest
@@ -21,7 +22,7 @@ from release_lib.contracts import load_contract
 from release_lib.package import attach_attestations, build_package
 from release_lib.release import _parse_checksums, prepare_release, verify_release_dir, verify_revocations
 from release_lib.verify import verify_package
-from release_lib.toolchains import validate_windows_output
+from release_lib.toolchains import _prepare_windows, validate_windows_output
 from release_lib.workflow_policy import check_workflows
 
 SOURCE_COMMIT = "1" * 40
@@ -124,6 +125,30 @@ class ReleaseToolingTests(unittest.TestCase):
         ) as run:
             _windows_build(self.source, self.contract, "windows-x86_64", self.api)
         self.assertEqual(run.call_args.kwargs["env"]["SOURCE_DATE_EPOCH"], "0")
+
+    def test_windows_installer_uses_supported_arguments(self) -> None:
+        installation = self.root / "visual-studio"
+        installation.mkdir()
+        installer_root = self.root / "installer"
+        setup = installer_root / "Microsoft Visual Studio/Installer/setup.exe"
+        setup.parent.mkdir(parents=True)
+        setup.write_bytes(b"setup")
+        config = self.source / self.contract["platforms"]["windows-x86_64"]["provisioning"]["configuration_file"]
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text('{"version":"1.0","components":[]}', encoding="utf-8")
+        toolset = installation / "VC/Tools/MSVC/14.50.35717"
+
+        def install(command: list[str]) -> mock.Mock:
+            toolset.mkdir(parents=True)
+            return mock.Mock(returncode=0, args=command)
+
+        with mock.patch.dict(os.environ, {"ProgramFiles(x86)": str(installer_root)}), mock.patch(
+            "release_lib.toolchains.visual_studio_installation", return_value=installation
+        ), mock.patch("release_lib.toolchains.subprocess.run", side_effect=install) as run, mock.patch(
+            "release_lib.toolchains.windows_probe"
+        ):
+            _prepare_windows(self.source, self.contract, "windows-x86_64")
+        self.assertNotIn("--wait", run.call_args.args[0])
 
     def test_workflow_policy(self) -> None:
         check_workflows(ROOT)
